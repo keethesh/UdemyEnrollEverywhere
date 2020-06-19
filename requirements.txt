@@ -1,0 +1,8 @@
+lxml
+pyderman
+selenium
+colorama
+fake_useragent
+browser_cookie3
+tld
+aiohttp[speedups]
