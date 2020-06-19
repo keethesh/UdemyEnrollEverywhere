@@ -89,8 +89,12 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--client_id', action="store_true", default=False, help="This is your client ID")
 parser.add_argument('--access_token', action="store_true", default=False, help="This is your access token")
 args = parser.parse_args()
+# The following two lines are there because Pycharm was bothering me. But apart from that, they exist for no reason.
+client_id = args.client_id
+access_token = args.access_token
 init()
-if not args.access_token or not args.client_id:
+
+if not client_id or not access_token:
     print(f"{Fore.YELLOW}[!] No cookies provided, trying to get them automatically...")
     access_token, client_id = get_cookies()
 print(f"{Fore.GREEN}[{tick}] Successfully extracted needed cookies from your browsers!")

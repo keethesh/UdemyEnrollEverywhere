@@ -12,7 +12,7 @@ async def yofreesamples():
                 set([course.attrib["href"] for course in doc.xpath('//a[@href][@class="btn btn-md btn-success"]')]))
 
 
-async def learnviral():  # Not used at the moment, takes too much time to complet
+async def learnviral():  # Not used at the moment, takes too much time to complete
     courses_list = []
     base_url = "https://udemycoupon.learnviral.com/page/"
     async with aiohttp.ClientSession() as session:
