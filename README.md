@@ -1,5 +1,13 @@
 # UdemyEnrollEverywhere
+[![forthebadge made-with-python](http://ForTheBadge.com/images/badges/made-with-python.svg)](https://www.python.org/)
+
+![GitHub stars](https://img.shields.io/github/stars/keethesh/UdemyEnrollEverywhere?style=for-the-badge)
+
 Want to brag about having a lot of Udemy courses? Then UdemyEnrollEverywhere is what you need! It searches for coupons, and adds the corresponding courses to your account!
+
+#### Please answer the poll! Else, at night, when I'm not able to sleep, I'll ask myself if my script is working for everyone or not...
+[![](https://api.gh-polls.com/poll/01EB98NEYFACZVT4YWZRG4A8EJ/Working%20great!%20%F0%9F%91%8D)](https://api.gh-polls.com/poll/01EB98NEYFACZVT4YWZRG4A8EJ/Working%20great!%20%F0%9F%91%8D/vote)
+[![](https://api.gh-polls.com/poll/01EB98NEYFACZVT4YWZRG4A8EJ/I%20have%20an%20error%F0%9F%98%AD%20(If%20you%20vote%20for%20this%2C%20please%20open%20an%20issue))](https://api.gh-polls.com/poll/01EB98NEYFACZVT4YWZRG4A8EJ/I%20have%20an%20error%F0%9F%98%AD%20(If%20you%20vote%20for%20this%2C%20please%20open%20an%20issue)/vote)
 
 ## Installation
 ### The requirements
@@ -34,11 +42,18 @@ If you are not logged in, or if you want to login manually for whatever reason, 
 If on Chrome, after opening _DevTools_, go to the `Application` tab
 3. Open the dropdown of the `Cookies` option
 4. Click on the Udemy landing page URL(https://www.udemy.com for those not following)
-5. Then, copy the value of `access_token` and `client_id`
+5. Then, note the values of `access_token` and `client_id`
 
 That's it!
 
-### Last note
+## Todo
+- Scrape coupons from more websites
+    - [ ] Make scraping on Learnviral faster
+
+If you know such websites, that is not using Javascript preferably, please open an issue and tell me about it!
+- Add more things to the Todo section of my README
+
+## Footnote
 [AmmeySaini](https://github.com/AmmeySaini) did [a very interesting, similar project](https://github.com/AmmeySaini/Udemy-Paid-Courses-Grabber), only using requests. I'd like to say that no idea(except using cookies to login) is taken from him. I even saw that we were both using browser_cookie3 to get the cookies from the browsers! 
 
 This project idea was given to me by [chaoscreater](https://github.com/chaoscreater), in [issue#10](https://github.com/keethesh/UdemyCourseGrabber/issues/10) of my other Udemy project, [UdemyCourseGrabber](https://github.com/keethesh/UdemyCourseGrabber).
