@@ -13,6 +13,7 @@ from selenium.webdriver.chrome.options import Options as chromeOpts
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
+from webdriver_manager.chrome import ChromeDriverManager
 
 from scrapers import *
 
@@ -42,7 +43,8 @@ class NoCookiesException(Error):
 
 def get_cookies():
     try:
-        udemy_cookies = browser_cookie3.load(domain_name='www.udemy.com')._cookies["www.udemy.com"]["/"]
+        udemy_cookies = browser_cookie3.load(
+            domain_name='www.udemy.com')._cookies["www.udemy.com"]["/"]
         return udemy_cookies["access_token"].value, udemy_cookies["client_id"].value
 
     except KeyError:
@@ -50,7 +52,8 @@ def get_cookies():
 
 
 def get_free_courses():
-    all_courses = loop.run_until_complete(asyncio.gather(*[asyncio.ensure_future(func) for func in site_list]))
+    all_courses = loop.run_until_complete(asyncio.gather(
+        *[asyncio.ensure_future(func) for func in site_list]))
     return list(chain.from_iterable(all_courses))
 
 
@@ -58,14 +61,16 @@ def start_browser():
     opts = chromeOpts()
     opts.add_argument("--headless")
     opts.add_argument(f"user-agent={ua.random}")
-    prefs = {'profile.managed_default_content_settings.images': 2}  # Disallow images from loading
+    # Disallow images from loading
+    prefs = {'profile.managed_default_content_settings.images': 2}
     opts.add_experimental_option("prefs", prefs)
     try:
-        driver = Chrome(options=opts)
+        driver = Chrome(ChromeDriverManager().install(), options=opts)
     except WebDriverException:
         print("Chromedriver not detected, it will now be downloaded...")
-        install(browser=chrome, file_directory='./', filename="chromedriver.exe")
-        driver = Chrome(options=opts)
+        install(browser=chrome, file_directory='./',
+                filename="chromedriver.exe")
+        driver = Chrome(ChromeDriverManager().install(), options=opts)
     return driver
 
 
@@ -86,8 +91,10 @@ def enroll_possible():
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--client_id', action="store_true", default=False, help="This is your client ID")
-parser.add_argument('--access_token', action="store_true", default=False, help="This is your access token")
+parser.add_argument('--client_id', action="store_true",
+                    default=False, help="This is your client ID")
+parser.add_argument('--access_token', action="store_true",
+                    default=False, help="This is your access token")
 args = parser.parse_args()
 # The following two lines are there because Pycharm was bothering me. But apart from that, they exist for no reason.
 client_id = args.client_id
@@ -95,9 +102,11 @@ access_token = args.access_token
 init()
 
 if not client_id or not access_token:
-    print(f"{Fore.YELLOW}[!] No cookies provided, trying to get them automatically...")
+    print(
+        f"{Fore.YELLOW}[!] No cookies provided, trying to get them automatically...")
     access_token, client_id = get_cookies()
-print(f"{Fore.GREEN}[{tick}] Successfully extracted needed cookies from your browsers!")
+print(
+    f"{Fore.GREEN}[{tick}] Successfully extracted needed cookies from your browsers!")
 
 loop = asyncio.get_event_loop()
 ua = UserAgent()
@@ -106,8 +115,10 @@ courses = get_free_courses()
 browser = start_browser()
 
 browser.get("https://www.udemy.com/random_page_that_does_not_exist/")
-browser.add_cookie({'name': 'client_id', 'value': client_id, 'domain': "udemy.com"})
-browser.add_cookie({'name': 'access_token', 'value': access_token, 'domain': "udemy.com"})
+browser.add_cookie(
+    {'name': 'client_id', 'value': client_id, 'domain': "udemy.com"})
+browser.add_cookie(
+    {'name': 'access_token', 'value': access_token, 'domain': "udemy.com"})
 browser.get("https://www.udemy.com/?persist_locale=&locale=en_US")
 
 try:
@@ -129,13 +140,16 @@ for url in courses:
     WebDriverWait(browser, 3).until(EC.presence_of_element_located((
         By.XPATH, "//h1[contains(@class,'clp-lead__title')]")))
 
-    course_name = browser.find_element_by_xpath("//h1[contains(@class,'clp-lead__title')]").text.strip()
+    course_name = browser.find_element_by_xpath(
+        "//h1[contains(@class,'clp-lead__title')]").text.strip()
     enroll_test = enroll_possible()
     if enroll_test is not True:
-        print(f"{Fore.YELLOW}[!] Cannot enroll in '{course_name}' because {enroll_test[1]}")
+        print(
+            f"{Fore.YELLOW}[!] Cannot enroll in '{course_name}' because {enroll_test[1]}")
         continue
     try:
-        WebDriverWait(browser, 3).until(EC.element_to_be_clickable((By.XPATH, enroll_xpath)))
+        WebDriverWait(browser, 3).until(
+            EC.element_to_be_clickable((By.XPATH, enroll_xpath)))
         browser.find_element_by_xpath(enroll_xpath).click()
     except (NoSuchElementException, ElementNotInteractableException,
             ElementClickInterceptedException, TimeoutException):
@@ -149,15 +163,19 @@ for url in courses:
         continue
     except TimeoutException:
         pass
-    print(f"{Fore.RED}[{warning}] Unknown error, couldn't enroll in " + course_name)
+    print(
+        f"{Fore.RED}[{warning}] Unknown error, couldn't enroll in " + course_name)
 
 print(f"\n{Fore.GREEN}[{tick}] All courses have been checked!")
 success_rate = success_counter / len(courses)
 if success_rate == 0:
-    print(f"{Fore.RED}[!] None of the courses have been added to your account out of {len(courses)}")
+    print(
+        f"{Fore.RED}[!] None of the courses have been added to your account out of {len(courses)}")
 if success_rate >= 50:
-    print(f"{Fore.GREEN}[{tick}] Added {success_counter} courses to your account out of {len(courses)}")
+    print(
+        f"{Fore.GREEN}[{tick}] Added {success_counter} courses to your account out of {len(courses)}")
 else:
-    print(f"{Fore.RED}[{tick}] Added only {success_counter} courses to your account out of {len(courses)}")
+    print(
+        f"{Fore.RED}[{tick}] Added only {success_counter} courses to your account out of {len(courses)}")
 
 browser.quit()
