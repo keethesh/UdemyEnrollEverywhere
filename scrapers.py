@@ -1,6 +1,5 @@
 import aiohttp
 from lxml import html
-from tqdm import tqdm
 
 
 async def yofreesamples():
@@ -23,7 +22,7 @@ async def learnviral():  # Not used at the moment, takes too much time to comple
             for link in doc.xpath('//a[@class="coupon-code-link btn promotion"]'):
                 courses_list.append(link.attrib.get("href"))
 
-        for page in tqdm(range(2, total_pages + 1)):
+        for page in range(2, total_pages + 1):
             async with session.get(f"{base_url}{page}") as response:
                 response = await response.read()
                 doc = html.fromstring(response)
