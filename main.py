@@ -121,7 +121,12 @@ except TimeoutException:
 success_counter = 0
 for url in courses:
     browser.get(url)
-    WebDriverWait(browser, 2).until(EC.presence_of_element_located((
+    if len(browser.find_elements_by_xpath(
+            "//span[contains(text(),'Sorry, this course is no longer accepting enrollme')]")) == 1:
+        print(f"{Fore.YELLOW}[!] Cannot enroll in the course at {url} because the course is not "
+              f"accepting enrollments anymore")
+        continue
+    WebDriverWait(browser, 3).until(EC.presence_of_element_located((
         By.XPATH, "//h1[contains(@class,'clp-lead__title')]")))
 
     course_name = browser.find_element_by_xpath("//h1[contains(@class,'clp-lead__title')]").text.strip()
@@ -148,7 +153,11 @@ for url in courses:
 
 print(f"\n{Fore.GREEN}[{tick}] All courses have been checked!")
 success_rate = success_counter / len(courses)
+if success_rate == 0:
+    print(f"{Fore.RED}[!] None of the courses have been added to your account out of {len(courses)}")
 if success_rate >= 50:
     print(f"{Fore.GREEN}[{tick}] Added {success_counter} courses to your account out of {len(courses)}")
 else:
     print(f"{Fore.RED}[{tick}] Added only {success_counter} courses to your account out of {len(courses)}")
+
+browser.quit()
