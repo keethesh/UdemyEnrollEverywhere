@@ -4,7 +4,7 @@ Want to brag about having a lot of Udemy courses? Then UdemyEnrollEverywhere is 
 ## Installation
 ### The requirements
 - Python 3
-- Chrome for Selenium
+- Chrome
 - A Udemy account
 
 ### Installing the modules
