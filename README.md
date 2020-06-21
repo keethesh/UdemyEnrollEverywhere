@@ -1,7 +1,7 @@
 # UdemyEnrollEverywhere
 [![forthebadge made-with-python](http://ForTheBadge.com/images/badges/made-with-python.svg)](https://www.python.org/)
 
-![GitHub stars](https://img.shields.io/github/stars/keethesh/UdemyEnrollEverywhere?style=for-the-badge)
+[![GitHub stars](https://img.shields.io/github/stars/keethesh/UdemyEnrollEverywhere?style=for-the-badge)](https://github.com/keethesh/UdemyEnrollEverywhere/stargazers)
 
 Want to brag about having a lot of Udemy courses? Then UdemyEnrollEverywhere is what you need! It searches for coupons, and adds the corresponding courses to your account!
 
