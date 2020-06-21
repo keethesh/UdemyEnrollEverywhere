@@ -48,9 +48,9 @@ That's it!
 
 ## Todo
 - Scrape coupons from more websites
-    - [ ] Make scraping on Learnviral faster
+    - [x] Make scraping on Learnviral faster
 
-If you know such websites, that is not using Javascript preferably, please open an issue and tell me about it!
+If you know such websites, that are not using Javascript preferably, please open an issue and tell me about it!
 - Add more things to the Todo section of my README
 
 ## Footnote
