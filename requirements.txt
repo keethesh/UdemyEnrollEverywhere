@@ -5,3 +5,4 @@ colorama
 fake_useragent
 browser_cookie3
 aiohttp[speedups]
+webdriver_manager

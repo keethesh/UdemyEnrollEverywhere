@@ -5,7 +5,6 @@ from itertools import chain
 import browser_cookie3
 from colorama import init, Fore
 from fake_useragent import UserAgent
-from pyderman import chrome, install
 from selenium.common.exceptions import WebDriverException, ElementClickInterceptedException, \
     NoSuchElementException, ElementNotInteractableException, TimeoutException
 from selenium.webdriver import Chrome
@@ -13,6 +12,7 @@ from selenium.webdriver.chrome.options import Options as chromeOpts
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
+from webdriver_manager.chrome import ChromeDriverManager
 
 from scrapers import *
 
@@ -50,7 +50,8 @@ def get_cookies():
 
 
 def get_free_courses():
-    all_courses = loop.run_until_complete(asyncio.gather(*[asyncio.ensure_future(func) for func in site_list]))
+    all_courses = loop.run_until_complete(asyncio.gather(
+        *[asyncio.ensure_future(func) for func in site_list]))
     return list(chain.from_iterable(all_courses))
 
 
@@ -58,14 +59,13 @@ def start_browser():
     opts = chromeOpts()
     opts.add_argument("--headless")
     opts.add_argument(f"user-agent={ua.random}")
-    prefs = {'profile.managed_default_content_settings.images': 2}  # Disallow images from loading
+    # Disallow images from loading
+    prefs = {'profile.managed_default_content_settings.images': 2}
     opts.add_experimental_option("prefs", prefs)
     try:
         driver = Chrome(options=opts)
     except WebDriverException:
-        print("Chromedriver not detected, it will now be downloaded...")
-        install(browser=chrome, file_directory='./', filename="chromedriver.exe")
-        driver = Chrome(options=opts)
+        driver = Chrome(ChromeDriverManager().install(), options=opts)
     return driver
 
 
@@ -86,8 +86,10 @@ def enroll_possible():
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--client_id', action="store_true", default=False, help="This is your client ID")
-parser.add_argument('--access_token', action="store_true", default=False, help="This is your access token")
+parser.add_argument('--client_id', action="store_true",
+                    default=False, help="This is your client ID")
+parser.add_argument('--access_token', action="store_true",
+                    default=False, help="This is your access token")
 args = parser.parse_args()
 # The following two lines are there because Pycharm was bothering me. But apart from that, they exist for no reason.
 client_id = args.client_id
@@ -106,8 +108,10 @@ courses = get_free_courses()
 browser = start_browser()
 
 browser.get("https://www.udemy.com/random_page_that_does_not_exist/")
-browser.add_cookie({'name': 'client_id', 'value': client_id, 'domain': "udemy.com"})
-browser.add_cookie({'name': 'access_token', 'value': access_token, 'domain': "udemy.com"})
+browser.add_cookie(
+    {'name': 'client_id', 'value': client_id, 'domain': "udemy.com"})
+browser.add_cookie(
+    {'name': 'access_token', 'value': access_token, 'domain': "udemy.com"})
 browser.get("https://www.udemy.com/?persist_locale=&locale=en_US")
 
 try:
@@ -135,7 +139,8 @@ for url in courses:
         print(f"{Fore.YELLOW}[!] Cannot enroll in '{course_name}' because {enroll_test[1]}")
         continue
     try:
-        WebDriverWait(browser, 3).until(EC.element_to_be_clickable((By.XPATH, enroll_xpath)))
+        WebDriverWait(browser, 3).until(
+            EC.element_to_be_clickable((By.XPATH, enroll_xpath)))
         browser.find_element_by_xpath(enroll_xpath).click()
     except (NoSuchElementException, ElementNotInteractableException,
             ElementClickInterceptedException, TimeoutException):
