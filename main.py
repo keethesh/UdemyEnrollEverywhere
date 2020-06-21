@@ -5,7 +5,6 @@ from itertools import chain
 import browser_cookie3
 from colorama import init, Fore
 from fake_useragent import UserAgent
-from pyderman import chrome, install
 from selenium.common.exceptions import WebDriverException, ElementClickInterceptedException, \
     NoSuchElementException, ElementNotInteractableException, TimeoutException
 from selenium.webdriver import Chrome
@@ -65,11 +64,8 @@ def start_browser():
     prefs = {'profile.managed_default_content_settings.images': 2}
     opts.add_experimental_option("prefs", prefs)
     try:
-        driver = Chrome(ChromeDriverManager().install(), options=opts)
+        driver = Chrome(options=opts)
     except WebDriverException:
-        print("Chromedriver not detected, it will now be downloaded...")
-        install(browser=chrome, file_directory='./',
-                filename="chromedriver.exe")
         driver = Chrome(ChromeDriverManager().install(), options=opts)
     return driver
 
