@@ -162,8 +162,7 @@ if success_rate == 0:
     print(
         f"{Fore.RED}[!] None of the courses have been added to your account out of {len(courses)}")
 if success_rate >= 50:
-    print(
-        f"{Fore.GREEN}[{tick}] Added {success_counter} courses to your account out of {len(courses)}")
+    print(f"{Fore.GREEN}[{tick}] Added {success_counter} courses to your account out of {len(courses)}")
 else:
     print(
         f"{Fore.RED}[{tick}] Added only {success_counter} courses to your account out of {len(courses)}")
