@@ -70,7 +70,7 @@ def get_free_courses():
 
 def start_browser():
     opts = chromeOpts()
-    # opts.add_argument("--headless")
+    opts.add_argument("--headless")
     opts.add_argument(f"user-agent={ua.random}")
     prefs = {'profile.managed_default_content_settings.images': 2}  # Disallow images from loading
     opts.add_experimental_option("prefs", prefs)
