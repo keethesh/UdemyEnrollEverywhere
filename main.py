@@ -42,8 +42,7 @@ class NoCookiesException(Error):
 
 def get_cookies():
     try:
-        udemy_cookies = browser_cookie3.load(
-            domain_name='www.udemy.com')._cookies["www.udemy.com"]["/"]
+        udemy_cookies = browser_cookie3.load(domain_name='www.udemy.com')._cookies["www.udemy.com"]["/"]
         return udemy_cookies["access_token"].value, udemy_cookies["client_id"].value
 
     except KeyError:
@@ -98,11 +97,9 @@ access_token = args.access_token
 init()
 
 if not client_id or not access_token:
-    print(
-        f"{Fore.YELLOW}[!] No cookies provided, trying to get them automatically...")
+    print(f"{Fore.YELLOW}[!] No cookies provided, trying to get them automatically...")
     access_token, client_id = get_cookies()
-print(
-    f"{Fore.GREEN}[{tick}] Successfully extracted needed cookies from your browsers!")
+print(f"{Fore.GREEN}[{tick}] Successfully extracted needed cookies from your browsers!")
 
 loop = asyncio.get_event_loop()
 ua = UserAgent()
@@ -136,12 +133,10 @@ for url in courses:
     WebDriverWait(browser, 3).until(EC.presence_of_element_located((
         By.XPATH, "//h1[contains(@class,'clp-lead__title')]")))
 
-    course_name = browser.find_element_by_xpath(
-        "//h1[contains(@class,'clp-lead__title')]").text.strip()
+    course_name = browser.find_element_by_xpath("//h1[contains(@class,'clp-lead__title')]").text.strip()
     enroll_test = enroll_possible()
     if enroll_test is not True:
-        print(
-            f"{Fore.YELLOW}[!] Cannot enroll in '{course_name}' because {enroll_test[1]}")
+        print(f"{Fore.YELLOW}[!] Cannot enroll in '{course_name}' because {enroll_test[1]}")
         continue
     try:
         WebDriverWait(browser, 3).until(
@@ -159,8 +154,7 @@ for url in courses:
         continue
     except TimeoutException:
         pass
-    print(
-        f"{Fore.RED}[{warning}] Unknown error, couldn't enroll in " + course_name)
+    print(f"{Fore.RED}[{warning}] Unknown error, couldn't enroll in " + course_name)
 
 print(f"\n{Fore.GREEN}[{tick}] All courses have been checked!")
 success_rate = success_counter / len(courses)
