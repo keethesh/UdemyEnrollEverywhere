@@ -156,6 +156,7 @@ for url in courses:
         pass
     print(f"{Fore.RED}[{warning}] Unknown error, couldn't enroll in " + course_name)
 
+print(f"\n{Fore.GREEN}[{tick}] All courses have been checked!")
 success_rate = success_counter / len(courses)
 if success_rate == 0:
     print(f"{Fore.RED}[!] None of the courses have been added to your account out of {len(courses)}")
