@@ -1,16 +1,12 @@
 import argparse
-import asyncio
-from itertools import chain
 
 import browser_cookie3
-from colorama import init, Fore
-from fake_useragent import UserAgent
-from selenium.common.exceptions import WebDriverException, ElementClickInterceptedException, \
+from selenium.common.exceptions import ElementClickInterceptedException, \
     NoSuchElementException, ElementNotInteractableException, TimeoutException
 from selenium.webdriver import Chrome
 from selenium.webdriver.chrome.options import Options as chromeOpts
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.wait import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
 
@@ -18,6 +14,8 @@ from scrapers import *
 
 tick = u"\u2713"
 warning = u"\u26A0"
+loop = asyncio.ProactorEventLoop()
+asyncio.set_event_loop(loop)
 
 
 class Error(Exception):
@@ -50,28 +48,22 @@ def get_cookies():
 
 
 def get_free_courses():
-    all_courses = loop.run_until_complete(asyncio.gather(
-        *[asyncio.ensure_future(func) for func in site_list]))
-    return list(chain.from_iterable(all_courses))
+    return loop.run_until_complete(get_courses())
 
 
 def start_browser():
     opts = chromeOpts()
     opts.add_argument("--headless")
     opts.add_argument(f"user-agent={ua.random}")
-    # Disallow images from loading
-    prefs = {'profile.managed_default_content_settings.images': 2}
+    prefs = {'profile.managed_default_content_settings.images': 2}  # Disallow images from loading
     opts.add_experimental_option("prefs", prefs)
-    try:
-        driver = Chrome(options=opts)
-    except WebDriverException:
-        driver = Chrome(ChromeDriverManager().install(), options=opts)
+    driver = Chrome(ChromeDriverManager().install(), options=opts)
     return driver
 
 
 def enroll_possible():
     try:
-        WebDriverWait(browser, 1.25).until(EC.presence_of_element_located((
+        WebDriverWait(browser, 1.25).until(ec.presence_of_element_located((
             By.XPATH, "//span[contains(text(),'Free')]")))
         return True
 
@@ -94,28 +86,34 @@ args = parser.parse_args()
 # The following two lines are there because Pycharm was bothering me. But apart from that, they exist for no reason.
 client_id = args.client_id
 access_token = args.access_token
-init()
 
 if not client_id or not access_token:
     print(f"{Fore.YELLOW}[!] No cookies provided, trying to get them automatically...")
     access_token, client_id = get_cookies()
 print(f"{Fore.GREEN}[{tick}] Successfully extracted needed cookies from your browsers!")
 
-loop = asyncio.get_event_loop()
 ua = UserAgent()
 enroll_xpath = "//button[@class='course-cta btn btn-lg btn-quaternary btn-block']"
-courses = get_free_courses()
-browser = start_browser()
 
-browser.get("https://www.udemy.com/random_page_that_does_not_exist/")
-browser.add_cookie(
-    {'name': 'client_id', 'value': client_id, 'domain': "udemy.com"})
-browser.add_cookie(
-    {'name': 'access_token', 'value': access_token, 'domain': "udemy.com"})
-browser.get("https://www.udemy.com/?persist_locale=&locale=en_US")
+print(f"{Fore.YELLOW}[!] Scraping courses from {len(functions_list)} websites...")
+courses = get_free_courses()
+print(f"{Fore.GREEN}[{tick}] Scraped {len(courses)} courses!")
+while True:
+    browser = start_browser()
+
+    browser.get("https://www.udemy.com/random_page_that_does_not_exist/")
+    browser.add_cookie(
+        {'name': 'client_id', 'value': client_id, 'domain': "udemy.com"})
+    browser.add_cookie(
+        {'name': 'access_token', 'value': access_token, 'domain': "udemy.com"})
+    browser.get("https://www.udemy.com/?persist_locale=&locale=en_US")
+    if 'upgrade-your-browser' in browser.current_url:
+        browser.quit()
+    else:
+        break
 
 try:
-    WebDriverWait(browser, 3.5).until(EC.presence_of_element_located((
+    WebDriverWait(browser, 3.5).until(ec.presence_of_element_located((
         By.XPATH, "//span[contains(text(),'Log in')]")))
     browser.quit()
     raise InvalidCookiesException()
@@ -130,23 +128,27 @@ for url in courses:
         print(f"{Fore.YELLOW}[!] Cannot enroll in the course at {url} because the course is not "
               f"accepting enrollments anymore")
         continue
-    WebDriverWait(browser, 3).until(EC.presence_of_element_located((
-        By.XPATH, "//h1[contains(@class,'clp-lead__title')]")))
+    try:
+        WebDriverWait(browser, 3).until(ec.presence_of_element_located((
+            By.XPATH, "//h1[contains(@class,'clp-lead__title')]")))
+    except TimeoutException:
+        continue
 
     course_name = browser.find_element_by_xpath("//h1[contains(@class,'clp-lead__title')]").text.strip()
     enroll_test = enroll_possible()
     if enroll_test is not True:
         print(f"{Fore.YELLOW}[!] Cannot enroll in '{course_name}' because {enroll_test[1]}")
         continue
+
     try:
         WebDriverWait(browser, 3).until(
-            EC.element_to_be_clickable((By.XPATH, enroll_xpath)))
+            ec.element_to_be_clickable((By.XPATH, enroll_xpath)))
         browser.find_element_by_xpath(enroll_xpath).click()
     except (NoSuchElementException, ElementNotInteractableException,
             ElementClickInterceptedException, TimeoutException):
         continue
     try:
-        WebDriverWait(browser, 10).until(EC.presence_of_element_located((
+        WebDriverWait(browser, 10).until(ec.presence_of_element_located((
             By.XPATH, "//strong[contains(text(),'Great choice, ')]")))
 
         print(f"{Fore.GREEN}[{tick}] Successully enrolled in {course_name}")
@@ -157,8 +159,9 @@ for url in courses:
     print(f"{Fore.RED}[{warning}] Unknown error, couldn't enroll in " + course_name)
 
 print(f"\n{Fore.GREEN}[{tick}] All courses have been checked!")
+
 success_rate = success_counter / len(courses)
-if success_rate == 0:
+if success_counter == 0:
     print(f"{Fore.RED}[!] None of the courses have been added to your account out of {len(courses)}")
 if success_rate >= 50:
     print(f"{Fore.GREEN}[{tick}] Added {success_counter} courses to your account out of {len(courses)}")

@@ -1,8 +1,7 @@
 lxml
-pyderman
+webdriver_manager
 selenium
 colorama
 fake_useragent
 browser_cookie3
 aiohttp[speedups]
-webdriver_manager
