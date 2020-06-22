@@ -13,7 +13,7 @@ Want to brag about having a lot of Udemy courses? Then UdemyEnrollEverywhere is 
 
 ## Installation
 ### The requirements
-- Python 3
+- Python 3.6+
 - Chrome
 - A Udemy account
 
@@ -22,7 +22,7 @@ To install needed modules, do
 
 `pip3 install -r requirements.txt`
 
-If any error appears, try
+If any error pops up, try
 
 `pip install -r requirements.txt`
 
@@ -54,8 +54,11 @@ That's it!
     - [ ] Discudemy
     - [ ] Real.discount
     - [ ] allmycourses
-    
-If you know such websites, that are not using Javascript preferably, please open an issue and tell me about it!
+
+    If you know such websites, that are not using Javascript preferably, please open an issue and tell me about it!
+
+- [ ] Make it use Firefox if Chrome cannot be used
+- [ ] Add a system to get and keep track of your courses, so that it won't try adding them again
 
 - Add more things to the Todo section of my README
 
