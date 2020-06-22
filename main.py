@@ -1,4 +1,6 @@
 import argparse
+import atexit
+import sys
 
 import browser_cookie3
 from selenium.common.exceptions import ElementClickInterceptedException, \
@@ -15,7 +17,11 @@ from scrapers import *
 
 tick = u"\u2713"
 warning = u"\u26A0"
-loop = asyncio.ProactorEventLoop()
+
+if sys.platform == "win32":
+    loop = asyncio.ProactorEventLoop()
+else:
+    loop = asyncio.SelectorEventLoop()
 asyncio.set_event_loop(loop)
 
 
@@ -81,7 +87,6 @@ def start_browser():
 def start_and_login():
     while True:
         driver = start_browser()
-
         driver.get("https://www.udemy.com/random_page_that_does_not_exist/")
         driver.add_cookie(
             {'name': 'client_id', 'value': client_id, 'domain': "udemy.com"})
@@ -92,7 +97,6 @@ def start_and_login():
             driver.quit()
         else:
             break
-
     try:
         WebDriverWait(driver, 3.5).until(ec.presence_of_element_located((
             By.XPATH, "//span[contains(text(),'Log in')]")))
@@ -149,6 +153,7 @@ courses = get_free_courses()
 print(f"{Fore.GREEN}[{tick}] Scraped {len(courses)} courses!")
 
 browser = start_and_login()
+atexit.register(browser.quit)
 
 success_counter = 0
 for url in courses:
