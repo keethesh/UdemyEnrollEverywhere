@@ -65,4 +65,4 @@ That's it!
 ## Footnote
 [AmmeySaini](https://github.com/AmmeySaini) did [a very interesting, similar project](https://github.com/AmmeySaini/Udemy-Paid-Courses-Grabber), only using requests. I'd like to say that no idea(except using cookies to login) is taken from him. I even saw that we were both using browser_cookie3 to get the cookies from the browsers! 
 
-This project idea was given to me by [chaoscreater](https://github.com/chaoscreater), in [issue#10](https://github.com/keethesh/UdemyCourseGrabber/issues/10) of my other Udemy project, [UdemyCourseGrabber](https://github.com/keethesh/UdemyCourseGrabber).
+This project idea was given to me in an issue of my other Udemy project, [UdemyCourseGrabber](https://github.com/keethesh/UdemyCourseGrabber).
