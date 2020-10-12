@@ -76,7 +76,9 @@ def start_and_login():
         opts.add_argument(f"user-agent={ua.random}")
         prefs = {'profile.managed_default_content_settings.images': 2}  # Disallow images from loading
         opts.add_experimental_option("prefs", prefs)
-        driver = helium.start_chrome("https://www.udemy.com/random_page_that_does_not_exist/", options=opts)
+        driver = helium.start_chrome("https://www.udemy.com/random_page_that_does_not_exist/",
+                                     headless=True,
+                                     options=opts)
         driver.add_cookie(
             {'name': 'client_id', 'value': client_id, 'domain': udemy_domain})
         driver.add_cookie(
