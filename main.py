@@ -198,4 +198,4 @@ if success_rate >= 0.5:
 else:
     print(f"{Fore.RED}[{tick}] Added only {success_counter} courses to your account out of {len(courses)}")
 
-browser.quit()
+helium.kill_browser()
