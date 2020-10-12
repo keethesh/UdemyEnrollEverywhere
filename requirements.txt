@@ -1,6 +1,5 @@
 lxml
-webdriver_manager
-selenium
+helium
 colorama
 fake_useragent
 browser_cookie3

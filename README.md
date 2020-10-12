@@ -16,6 +16,7 @@ Want to brag about having a lot of Udemy courses? Then UdemyEnrollEverywhere is 
 - Python 3.6+
 - Chrome
 - A Udemy account
+- C++ Build Tools
 
 ### Installing the modules
 To install needed modules, do 

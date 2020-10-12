@@ -1,23 +1,23 @@
 import argparse
+import asyncio
 import atexit
+import json
 import sys
 
 import browser_cookie3
-from selenium.common.exceptions import ElementClickInterceptedException, \
-    NoSuchElementException, ElementNotInteractableException, TimeoutException
-from selenium.webdriver import Chrome
+import helium
+from colorama import Fore
+from fake_useragent import UserAgent
+from lxml import html
+from selenium.common.exceptions import TimeoutException, NoSuchElementException, ElementNotInteractableException, \
+    ElementClickInterceptedException
 from selenium.webdriver.chrome.options import Options as chromeOpts
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as ec
-from selenium.webdriver.support.wait import WebDriverWait
-from webdriver_manager.chrome import ChromeDriverManager
 
-from scrapers import *
+import scrapers
 
 tick = u"\u2713"
 warning = u"\u26A0"
-
+udemy_domain = "www.udemy.com"
 if sys.platform == "win32":
     loop = asyncio.ProactorEventLoop()
 else:
@@ -45,17 +45,13 @@ class NoCookiesException(Error):
         super().__init__(self.message)
 
 
-def get_user_info(driver):
+def get_user_info():
     try:
-        WebDriverWait(driver, 5).until(ec.presence_of_element_located((
-            By.XPATH, "//a[@id='header.profile']//div[@data-purpose='user-avatar']")))
-        hover = ActionChains(driver).move_to_element(
-            driver.find_element_by_xpath("//a[@id='header.profile']//div[@data-purpose='user-avatar']"))
-        hover.perform()
-        WebDriverWait(driver, 5).until(ec.presence_of_element_located((
-            By.XPATH, "//span[@class='text-midnight ellipsis']")))
-        mail = driver.find_element_by_xpath("//span[@class='text-midnight ellipsis']").text
-        display_name = driver.find_element_by_xpath("//span[contains(text(),'@')]").text
+        helium.go_to("https://www.udemy.com/user/edit-profile/")
+        helium.wait_until(helium.S("//hgroup/h2").exists, timeout_secs=5)
+        display_name = helium.S("//hgroup/h2").web_element.text
+        helium.click(helium.Text("Account"))
+        mail = helium.S("//div[@class]/b").web_element.text
         return mail, display_name
     except TimeoutException:
         return None
@@ -63,7 +59,7 @@ def get_user_info(driver):
 
 def get_cookies():
     try:
-        udemy_cookies = browser_cookie3.load(domain_name='www.udemy.com')._cookies["www.udemy.com"]["/"]
+        udemy_cookies = browser_cookie3.load(domain_name=udemy_domain)._cookies[udemy_domain]["/"]
         return udemy_cookies["access_token"].value, udemy_cookies["client_id"].value
 
     except KeyError:
@@ -71,39 +67,31 @@ def get_cookies():
 
 
 def get_free_courses():
-    return loop.run_until_complete(get_courses())
-
-
-def start_browser():
-    opts = chromeOpts()
-    opts.add_argument("--headless")
-    opts.add_argument(f"user-agent={ua.random}")
-    prefs = {'profile.managed_default_content_settings.images': 2}  # Disallow images from loading
-    opts.add_experimental_option("prefs", prefs)
-    driver = Chrome(ChromeDriverManager(log_level=0).install(), options=opts)
-    return driver
+    return loop.run_until_complete(scrapers.get_courses())
 
 
 def start_and_login():
     while True:
-        driver = start_browser()
-        driver.get("https://www.udemy.com/random_page_that_does_not_exist/")
+        opts = chromeOpts()
+        opts.add_argument(f"user-agent={ua.random}")
+        prefs = {'profile.managed_default_content_settings.images': 2}  # Disallow images from loading
+        opts.add_experimental_option("prefs", prefs)
+        driver = helium.start_chrome("https://www.udemy.com/random_page_that_does_not_exist/", options=opts)
         driver.add_cookie(
-            {'name': 'client_id', 'value': client_id, 'domain': "udemy.com"})
+            {'name': 'client_id', 'value': client_id, 'domain': udemy_domain})
         driver.add_cookie(
-            {'name': 'access_token', 'value': access_token, 'domain': "udemy.com"})
-        driver.get("https://www.udemy.com/?persist_locale=&locale=en_US")
+            {'name': 'access_token', 'value': access_token, 'domain': udemy_domain})
+        helium.go_to("https://www.udemy.com/?persist_locale=&locale=en_US")
         if 'upgrade-your-browser' in driver.current_url:
             driver.quit()
         else:
             break
     try:
-        WebDriverWait(driver, 3.5).until(ec.presence_of_element_located((
-            By.XPATH, "//span[contains(text(),'Log in')]")))
-        driver.quit()
+        helium.wait_until(helium.Button('Log in').exists, timeout_secs=3.5)
+        helium.kill_browser()
         raise InvalidCookiesException()
     except TimeoutException:
-        user_info = get_user_info(driver)
+        user_info = get_user_info()
         if user_info is None:
             print(f"{Fore.GREEN}[{tick}] Successfully logged in!\n")
         else:
@@ -113,20 +101,20 @@ def start_and_login():
     return driver
 
 
-def enroll_possible():
-    try:
-        WebDriverWait(browser, 1.25).until(ec.presence_of_element_located((
-            By.XPATH, "//span[contains(text(),'Free')]")))
-        return True
+def is_enroll_possible():
+    doc = html.fromstring(browser.page_source)
+    course_info = doc.xpath("//div[@class='ud-component--course-landing-page-udlite--price-text']")
+    if not course_info:
+        return "you already own this course"
 
-    except TimeoutException:
-        if len(browser.find_elements_by_xpath("//button[contains(text(),'Buy now')]")) == 1:
-            reason = "the coupon does not provide enough discount or the coupon is invalid"
-        elif len(browser.find_elements_by_xpath("//button[contains(text(),'Go to course')]")) == 1:
-            reason = "you already own this course"
+    try:
+        course_info = json.loads(course_info[0].attrib["data-component-props"])
+        if course_info["pricing_result"]["price"]["amount"] != 0.0:
+            return "the coupon does not provide enough discount or the coupon is invalid"
         else:
-            reason = "of an unknown reason"
-        return reason
+            return True
+    except KeyError:
+        return "of an unknown reason"
 
 
 parser = argparse.ArgumentParser()
@@ -146,9 +134,10 @@ if not client_id or not access_token:
 print(f"{Fore.GREEN}[{tick}] Successfully extracted needed cookies from your browsers!")
 
 ua = UserAgent()
-enroll_xpath = "//button[@class='course-cta btn btn-lg btn-quaternary btn-block']"
+enroll_label = "Enroll now"
+enroll_xpath = "//button[@data-purpose='buy-this-course-button']/span"
 
-print(f"{Fore.YELLOW}[!] Scraping courses from {len(functions_list)} websites...")
+print(f"{Fore.YELLOW}[!] Scraping courses from {len(scrapers.functions_list)} websites...")
 courses = get_free_courses()
 print(f"{Fore.GREEN}[{tick}] Scraped {len(courses)} courses!")
 
@@ -157,41 +146,43 @@ atexit.register(browser.quit)
 
 success_counter = 0
 for url in courses:
-    browser.get(url)
-    if len(browser.find_elements_by_xpath(
-            "//span[contains(text(),'Sorry, this course is no longer accepting enrollme')]")) == 1:
+    helium.go_to(url)
+    if helium.S("//span[contains(text(),'Sorry, this course is no longer accepting enrollme')]").exists():
         print(f"{Fore.YELLOW}[!] Cannot enroll in the course at {url} because the course is not "
               f"accepting enrollments anymore")
         continue
+    elif helium.S("//span[contains(text(), ' is no longer available.')]").exists():
+        print(f"{Fore.YELLOW}[!] The course at {url} does not exist anymore")
+        continue
+    elif helium.S("//h1[@class='error__greeting']").exists():
+        print(f"{Fore.YELLOW}[!] The {url} does not exist")
+        continue
     try:
-        WebDriverWait(browser, 3).until(ec.presence_of_element_located((
-            By.XPATH, "//h1[contains(@class,'clp-lead__title')]")))
+        helium.wait_until(helium.S("//h1[@data-purpose='lead-title']").exists)
+        course_name = helium.S("//h1[@data-purpose='lead-title']").web_element.text
     except TimeoutException:
         continue
 
-    course_name = browser.find_element_by_xpath("//h1[contains(@class,'clp-lead__title')]").text.strip()
-    enroll_test = enroll_possible()
+    enroll_test = is_enroll_possible()
     if enroll_test is not True:
         print(f"{Fore.YELLOW}[!] Cannot enroll in '{course_name}' because {enroll_test}")
         continue
 
     try:
-        WebDriverWait(browser, 3).until(
-            ec.element_to_be_clickable((By.XPATH, enroll_xpath)))
-        browser.find_element_by_xpath(enroll_xpath).click()
+        helium.wait_until(helium.Button(enroll_label).exists)
+        helium.click(helium.Button(enroll_label))
     except (NoSuchElementException, ElementNotInteractableException,
-            ElementClickInterceptedException, TimeoutException):
+            ElementClickInterceptedException, TimeoutException) as e:
         continue
     try:
-        WebDriverWait(browser, 10).until(ec.presence_of_element_located((
-            By.XPATH, "//strong[contains(text(),'Great choice, ')]")))
-
-        print(f"{Fore.GREEN}[{tick}] Successully enrolled in '{course_name}'")
+        helium.wait_until(lambda: "checkout" in browser.current_url)
+        helium.click(helium.Button(enroll_label))
+        helium.wait_until(lambda: "success" in browser.current_url)
+        print(f"{Fore.GREEN}[{tick}] Successfully enrolled in '{course_name}'")
         success_counter += 1
         continue
-    except TimeoutException:
-        pass
-    print(f"{Fore.RED}[{warning}] Unknown error, couldn't enroll in '{course_name}'")
+    except TimeoutException as e:
+        print(f"{Fore.RED}[{warning}] Unknown error, couldn't enroll in '{course_name}'")
 
 print(f"\n{Fore.GREEN}[{tick}] All courses have been checked!")
 
@@ -199,7 +190,7 @@ success_rate = success_counter / len(courses)
 if success_counter == 0:
     print(f"{Fore.RED}[!] None of the courses have been added to your account out of {len(courses)}")
 
-if success_rate >= 50:
+if success_rate >= 0.5:
     print(f"{Fore.GREEN}[{tick}] Added {success_counter} courses to your account out of {len(courses)}")
 
 else:
