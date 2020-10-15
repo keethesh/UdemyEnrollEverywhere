@@ -18,6 +18,11 @@ import scrapers
 tick = u"\u2713"
 warning = u"\u26A0"
 udemy_domain = "www.udemy.com"
+ua = UserAgent()
+enroll_label = "Enroll now"
+enroll_xpath = "//button[@data-purpose='buy-this-course-button']/span"
+parser = argparse.ArgumentParser()
+
 if sys.platform == "win32":
     loop = asyncio.ProactorEventLoop()
 else:
@@ -48,11 +53,11 @@ class NoCookiesException(Error):
 def get_user_info():
     try:
         helium.go_to("https://www.udemy.com/user/edit-profile/")
-        helium.wait_until(helium.S("//hgroup/h2").exists, timeout_secs=5)
-        display_name = helium.S("//hgroup/h2").web_element.text
-        helium.click(helium.Text("Account"))
-        mail = helium.S("//div[@class]/b").web_element.text
-        return mail, display_name
+        user_information = browser.execute_script('return UD.me')
+        mail = user_information["email"]
+        display_name = user_information["display_name"]
+        account_id = user_information['id']
+        return mail, display_name, account_id
     except TimeoutException:
         return None
 
@@ -77,7 +82,7 @@ def start_and_login():
         prefs = {'profile.managed_default_content_settings.images': 2}  # Disallow images from loading
         opts.add_experimental_option("prefs", prefs)
         driver = helium.start_chrome("https://www.udemy.com/random_page_that_does_not_exist/",
-                                     headless=True,
+                                     headless=False,
                                      options=opts)
         driver.add_cookie(
             {'name': 'client_id', 'value': client_id, 'domain': udemy_domain})
@@ -93,14 +98,7 @@ def start_and_login():
         helium.kill_browser()
         raise InvalidCookiesException()
     except TimeoutException:
-        user_info = get_user_info()
-        if user_info is None:
-            print(f"{Fore.GREEN}[{tick}] Successfully logged in!\n")
-        else:
-            print(f"{Fore.GREEN}[{tick}] Successfully logged in!")
-            print(f"{Fore.YELLOW}[!] Email: {user_info[0]}")
-            print(f"{Fore.YELLOW}[!] Display Name: {user_info[1]}\n")
-    return driver
+        return driver
 
 
 def is_enroll_possible():
@@ -119,11 +117,8 @@ def is_enroll_possible():
         return "of an unknown reason"
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--client_id', action="store_true",
-                    default=False, help="This is your client ID")
-parser.add_argument('--access_token', action="store_true",
-                    default=False, help="This is your access token")
+parser.add_argument('--client_id', default=False, help="This is your client ID")
+parser.add_argument('--access_token', default=False, help="This is your access token")
 args = parser.parse_args()
 # The following two lines are there because Pycharm was bothering me. But apart from that, they exist for no reason.
 client_id = args.client_id
@@ -132,18 +127,20 @@ access_token = args.access_token
 if not client_id or not access_token:
     print(f"{Fore.YELLOW}[!] No cookies provided, trying to get them automatically...")
     access_token, client_id = get_cookies()
+    print(f"{Fore.GREEN}[{tick}] Successfully extracted needed cookies from your browsers!")
 
-print(f"{Fore.GREEN}[{tick}] Successfully extracted needed cookies from your browsers!")
-
-ua = UserAgent()
-enroll_label = "Enroll now"
-enroll_xpath = "//button[@data-purpose='buy-this-course-button']/span"
-
-print(f"{Fore.YELLOW}[!] Scraping courses from {len(scrapers.functions_list)} websites...")
+print(f"{Fore.YELLOW}[!] Scraping courses from {len(scrapers.scrapers_list)} websites...")
 courses = get_free_courses()
 print(f"{Fore.GREEN}[{tick}] Scraped {len(courses)} courses!")
 
 browser = start_and_login()
+user_info = get_user_info()
+if user_info is None:
+    print(f"{Fore.GREEN}[{tick}] Successfully logged in!\n")
+else:
+    print(f"{Fore.GREEN}[{tick}] Successfully logged in!")
+    print(f"{Fore.YELLOW}[!] Email: {user_info[0]}")
+    print(f"{Fore.YELLOW}[!] Display Name: {user_info[1]}\n")
 atexit.register(browser.quit)
 
 success_counter = 0

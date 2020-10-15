@@ -13,7 +13,7 @@ init()
 
 
 async def get_courses():
-    gathered_urls = [link for link in list(set(chain.from_iterable(await asyncio.gather(*functions_list))))]
+    gathered_urls = [link for link in list(set(chain.from_iterable(await asyncio.gather(*scrapers_list))))]
     return gathered_urls
 
 
@@ -71,5 +71,5 @@ async def learnviral(url, session):
 
 times = 0
 ua = UserAgent()
-functions_list = [yofreesamples(),
-                  learnviral_wrapper()]
+scrapers_list = [yofreesamples(),
+                 learnviral_wrapper()]
